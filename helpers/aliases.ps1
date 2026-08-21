@@ -14,7 +14,7 @@ function fvim
 
 function profileedit
 {
-  nvim $PROFILE
+  nvim (Join-Path (Split-Path -Parent $PROFILE) 'main.ps1')
 }
 
 function profilereload {

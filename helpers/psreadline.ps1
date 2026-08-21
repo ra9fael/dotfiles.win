@@ -10,8 +10,41 @@ Set-PSReadLineOption -HistorySearchCursorMovesToEnd
 Set-PSReadLineOption -HistoryNoDuplicates
 
 # Enable smart history prediction (ListView shows history suggestions in a dropdown list)
-Set-PSReadLineOption -PredictionSource History
-Set-PSReadLineOption -PredictionViewStyle ListView
+# Prediction needs an interactive VT console; skip when output is redirected
+# (e.g. `pwsh -Command` piped from another tool) so it doesn't throw mid-file.
+if (-not [Console]::IsOutputRedirected)
+{
+    Set-PSReadLineOption -PredictionSource History
+    Set-PSReadLineOption -PredictionViewStyle ListView
+}
+
+# History file location + filter (all PSReadLine options live in this file)
+Set-PSReadLineOption -HistorySavePath "$env:USERPROFILE\.powershell\pwsh_history.txt"
+
+Set-PSReadLineOption -AddToHistoryHandler {
+    param([string]$line)
+
+    if ([string]::IsNullOrWhiteSpace($line) -or $line.Length -lt 3)
+    {
+        return $false
+    }
+
+    if ($line -match '^(clear|cls)$')
+    {
+        return $false
+    }
+
+    $sensitiveKeywords = @('password', 'token', 'secret', 'apikey', 'sk-')
+    foreach ($keyword in $sensitiveKeywords)
+    {
+        if ($line -match "(?i)$keyword")
+        {
+            return $false
+        }
+    }
+
+    return $true
+}
 
 Set-PsFzfOption -PSReadlineChordProvider 'Ctrl+t' -PSReadlineChordReverseHistory 'Ctrl+r'
 function vhist
