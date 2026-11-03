@@ -132,5 +132,3 @@ function winset
     }
   }
 }
-
-Set-Alias -Name ws -Value winset
